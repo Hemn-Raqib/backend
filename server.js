@@ -7,17 +7,17 @@ import dotenv from "dotenv";
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // Define __dirname using fileURLToPath
 const app = express();
-const allowedOrigins = ['https://rukar.netlify.app', 'https://hhmmss.netlify.app'];
+const allowedOrigins = 'https://hhmmss.netlify.app';
 
 app.use(express.static(path.join(__dirname, "public")));
 // app.use(cors({ origin: 'https://rukar.netlify.app' }));
 app.use(cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+       if (!origin || origin === allowedOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
     }
   }));
 app.use(express.json());
