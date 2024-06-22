@@ -3,6 +3,8 @@ import mysql from "mysql2";
 import path from "path";
 import cors from "cors";
 import { fileURLToPath } from "url"; // Import fileURLToPath
+import dotenv from "dotenv";
+dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // Define __dirname using fileURLToPath
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
@@ -11,8 +13,6 @@ app.use(express.json());
 app.use(express.urlencoded({extended:false}));
 // Handle preflight requests
 app.options('*', cors());
-import dotenv from "dotenv";
-dotenv.config();
 const PORT = process.env.PORT || 2000;
 
 
@@ -37,41 +37,34 @@ db.connect( (error, result) => {
     });
     
     app.post("/add_user", (req, res) => {
-        console.log(req.body); // Log the request body to inspect it
-    // Rest of your code
+        const { name, email, age, gen } = req.body;
+    
+        // Log incoming request body
+        console.log("Incoming request to /add_user:", req.body);
+    
         // Check if the email already exists
-    let checkEmailQuery = "SELECT * FROM student_details WHERE email =?";
-    db.query(checkEmailQuery, [req.body.email], (error, results) => {
-        if (error) {
-            console.error(`There was an error checking the email in the route of /add_user in server.js file: ${error}`);
-            res.status(500).json({
-                error: "Internal server error"
-            });
-        } else if (results.length > 0) {
-            // If email exists, respond with an error
-            res.status(400).json({
-                error: "Email already exists"
-            });
-        } else {
-            // If email does not exist, proceed to insert the new student record
-            let sqlquery = "INSERT INTO student_details(`name`, `email`, `age`, `gender`) VALUES (?, ?, ?, ?)";
-            const values = [req.body.name, req.body.email, req.body.age, req.body.gen];
-
-            db.query(sqlquery, values, (error, result) => {
+        const checkEmailQuery = "SELECT * FROM student_details WHERE email = ?";
+        db.query(checkEmailQuery, [email], (error, results) => {
+            if (error) {
+                console.error(`Error checking email: ${error}`);
+                return res.status(500).json({ error: "Internal server error" });
+            } 
+            
+            if (results.length > 0) {
+                return res.status(400).json({ error: "Email already exists" });
+            } 
+    
+            // Insert the new student record
+            const insertQuery = "INSERT INTO student_details (`name`, `email`, `age`, `gender`) VALUES (?, ?, ?, ?)";
+            db.query(insertQuery, [name, email, age, gen], (error, result) => {
                 if (error) {
-                    console.error(`There is an error of adding new values in the route of /add_user in server.js file: ${error}`);
-                    res.status(500).json({
-                        error: "Failed to add student"
-                    });
-                } else {
-                    res.json({
-                        success: "Student added successfully"
-                    });
-                    console.log("Data has been added successfully to the database from server.js file");
-                }
+                    console.error(`Error adding new user: ${error}`);
+                    return res.status(500).json({ error: "Failed to add student" });
+                } 
+                res.json({ success: "Student added successfully" });
+                console.log("Data has been added successfully to the database");
             });
-        }
-    });
+        });
     });
 
     app.get('/students', (req, res) => {
