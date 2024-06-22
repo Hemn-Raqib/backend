@@ -6,8 +6,9 @@ import { fileURLToPath } from "url"; // Import fileURLToPath
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // Define __dirname using fileURLToPath
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cors());
+app.use(cors({ origin: 'https://rukar.netlify.app/' }));
 app.use(express.json());
+app.use(express.urlencoded({extended:false}));
 import dotenv from "dotenv";
 dotenv.config();
 const PORT = process.env.PORT || 2000;
@@ -18,8 +19,7 @@ const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    multipleStatements:true
+    database: process.env.DB_NAME
 });
 
 
@@ -44,7 +44,6 @@ db.connect( (error, result) => {
                 error: "Internal server error"
             });
         } else if (results.length > 0) {
-            window.alert(`The provided email has already registered`);
             // If email exists, respond with an error
             res.status(400).json({
                 error: "Email already exists"
@@ -69,20 +68,6 @@ db.connect( (error, result) => {
             });
         }
     });
-
-        // let sqlquery = "INSERT INTO student_details(`name`, `email`, `age`, `gender`) VALUES (?, ?, ?, ?)";
-        // const values = [req.body.name, req.body.email, req.body.age, req.body.gen,]
-
-        // db.query(sqlquery, values, (error, result) => {
-        //     if(error){
-        //         console.error(`there is an error of adding new values in the route of /add_user in server.js file ${error}`);
-        //     }else{
-        //         res.json({
-        //             success: `Student added successfully`
-        //         });
-        //         console.log(`data has been added successfully to database from server.js file`);
-        //     }
-        // });
     });
 
     app.get('/students', (req, res) => {
@@ -98,31 +83,7 @@ db.connect( (error, result) => {
             }
         });
     });
-    app.post('/reset', (req, res) => {
-        const truncateQuery = `TRUNCATE TABLE student_details`;
-    const resetAutoIncrementQuery = `ALTER TABLE student_details AUTO_INCREMENT=1`;
-
-    db.query(truncateQuery, (error, result1) => {
-        if (error) {
-            console.error(`There is an error truncating the student_details table: ${error}`);
-            res.status(500).json({ error: 'Internal Server Error' });
-            return;
-        }
-
-        db.query(resetAutoIncrementQuery, (error, result2) => {
-            if (error) {
-                console.error(`There is an error resetting the auto increment value for student_details: ${error}`);
-                res.status(500).json({ error: 'Internal Server Error' });
-                return;
-            }
-
-            res.json({
-                success: `The student_details table has been reset successfully.`
-            });
-            console.log(`The student_details table has been reset successfully.`);
-        });
-    });
-    });
+    
 
     app.get('/students/:id', (req, res) => {
         const id = req.params.id;
