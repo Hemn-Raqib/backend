@@ -6,7 +6,7 @@ import { fileURLToPath } from "url"; // Import fileURLToPath
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // Define __dirname using fileURLToPath
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cors({ origin: 'https://rukar.netlify.app/' }));
+app.use(cors({ origin: 'https://rukar.netlify.app' }));
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
 import dotenv from "dotenv";
