@@ -101,18 +101,62 @@ db.connect( (error, result) => {
         });
     });
 
+
+
+
     app.post('/edit_user/:id', (req, res) => {
         const id = req.params.id;
-        const sqlquery = "UPDATE student_details SET `name` =?, `email` =?, `age` =?, `gender` =? WHERE id =?";
-        const values = [req.body.name, req.body.email, req.body.age, req.body.gender, id];
-        db.query(sqlquery, values, (error, result) => {
-            if(error){
-                console.error(`there is an error of updating data from database in the route of /edit_user/:id in server.js file ${error}`);
-            }else{
-                res.json(result[0]);
-            }
-        });
+    const { name, email, age, gender } = req.body;
+    
+    // Check if the email already exists for a different user
+    let checkEmailQuery = "SELECT * FROM student_details WHERE email = ? AND id <> ?";
+    db.query(checkEmailQuery, [email, id], (error, results) => {
+        if (error) {
+            console.error(`There was an error checking the email in the route of /edit_user/:id in server.js file: ${error}`);
+            res.status(500).json({
+                error: "Internal server error"
+            });
+        } else if (results.length > 0) {
+            // If email exists for a different user, respond with an error
+            res.status(400).json({
+                error: "Email already exists"
+            });
+        } else {
+            // If email does not exist for a different user, proceed to update the user record
+            const sqlquery = "UPDATE student_details SET `name` = ?, `email` = ?, `age` = ?, `gender` = ? WHERE id = ?";
+            const values = [name, email, age, gender, id];
+            db.query(sqlquery, values, (error, result) => {
+                if (error) {
+                    console.error(`There is an error updating data in the route of /edit_user/:id in server.js file: ${error}`);
+                    res.status(500).json({
+                        error: "Failed to update student"
+                    });
+                } else {
+                    res.json({
+                        success: "Student updated successfully"
+                    });
+                    console.log("Data has been updated successfully in the database from server.js file");
+                }
+            });
+        }
     });
+
+
+        // const id = req.params.id;
+        // const sqlquery = "UPDATE student_details SET `name` =?, `email` =?, `age` =?, `gender` =? WHERE id =?";
+        // const values = [req.body.name, req.body.email, req.body.age, req.body.gender, id];
+        // db.query(sqlquery, values, (error, result) => {
+        //     if(error){
+        //         console.error(`there is an error of updating data from database in the route of /edit_user/:id in server.js file ${error}`);
+        //     }else{
+        //         res.json(result[0]);
+        //     }
+        // });
+    });
+
+
+
+
     app.delete('/delete_user/:id', (req, res) => {
         const id = req.params.id;
         const sqlquery = "DELETE FROM student_details  WHERE id =?";
