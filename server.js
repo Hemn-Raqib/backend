@@ -7,8 +7,19 @@ import dotenv from "dotenv";
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // Define __dirname using fileURLToPath
 const app = express();
+const allowedOrigins = ['https://rukar.netlify.app', 'https://hhmmss.netlify.app'];
+
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cors({ origin: 'https://rukar.netlify.app' }));
+// app.use(cors({ origin: 'https://rukar.netlify.app' }));
+app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  }));
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
 // Handle preflight requests
@@ -37,33 +48,36 @@ db.connect( (error, result) => {
     });
     
     app.post("/add_user", (req, res) => {
-        const { name, email, age, gen } = req.body;
-    
-        // Log incoming request body
-        console.log("Incoming request to /add_user:", req.body);
-    
-        // Check if the email already exists
-        const checkEmailQuery = "SELECT * FROM student_details WHERE email = ?";
-        db.query(checkEmailQuery, [email], (error, results) => {
-            if (error) {
-                console.error(`Error checking email: ${error}`);
-                return res.status(500).json({ error: "Internal server error" });
-            } 
-            
-            if (results.length > 0) {
-                return res.status(400).json({ error: "Email already exists" });
-            } 
-    
-            // Insert the new student record
-            const insertQuery = "INSERT INTO student_details (`name`, `email`, `age`, `gender`) VALUES (?, ?, ?, ?)";
-            db.query(insertQuery, [name, email, age, gen], (error, result) => {
-                if (error) {
-                    console.error(`Error adding new user: ${error}`);
-                    return res.status(500).json({ error: "Failed to add student" });
-                } 
-                res.json({ success: "Student added successfully" });
-                console.log("Data has been added successfully to the database");
+        console.log(req.body); // Log the request body to inspect it
+        let checkEmailQuery = "SELECT * FROM student_details WHERE email = ?";
+        db.query(checkEmailQuery, [req.body.email], (error, results) => {
+          if (error) {
+            console.error(`There was an error checking the email in the route of /add_user in server.js file: ${error}`);
+            res.status(500).json({
+              error: "Internal server error"
             });
+          } else if (results.length > 0) {
+            res.status(400).json({
+              error: "Email already exists"
+            });
+          } else {
+            let sqlquery = "INSERT INTO student_details(`name`, `email`, `age`, `gender`) VALUES (?, ?, ?, ?)";
+            const values = [req.body.name, req.body.email, req.body.age, req.body.gen];
+      
+            db.query(sqlquery, values, (error, result) => {
+              if (error) {
+                console.error(`There is an error of adding new values in the route of /add_user in server.js file: ${error}`);
+                res.status(500).json({
+                  error: "Failed to add student"
+                });
+              } else {
+                res.json({
+                  success: "Student added successfully"
+                });
+                console.log("Data has been added successfully to the database from server.js file");
+              }
+            });
+          }
         });
     });
 
@@ -135,16 +149,7 @@ db.connect( (error, result) => {
     });
 
 
-        // const id = req.params.id;
-        // const sqlquery = "UPDATE student_details SET `name` =?, `email` =?, `age` =?, `gender` =? WHERE id =?";
-        // const values = [req.body.name, req.body.email, req.body.age, req.body.gender, id];
-        // db.query(sqlquery, values, (error, result) => {
-        //     if(error){
-        //         console.error(`there is an error of updating data from database in the route of /edit_user/:id in server.js file ${error}`);
-        //     }else{
-        //         res.json(result[0]);
-        //     }
-        // });
+       
     });
 
 
