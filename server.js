@@ -9,6 +9,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(cors({ origin: 'https://rukar.netlify.app' }));
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
+// Handle preflight requests
+app.options('*', cors());
 import dotenv from "dotenv";
 dotenv.config();
 const PORT = process.env.PORT || 2000;
