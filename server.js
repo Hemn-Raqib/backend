@@ -37,6 +37,8 @@ db.connect( (error, result) => {
     });
     
     app.post("/add_user", (req, res) => {
+        console.log(req.body); // Log the request body to inspect it
+    // Rest of your code
         // Check if the email already exists
     let checkEmailQuery = "SELECT * FROM student_details WHERE email =?";
     db.query(checkEmailQuery, [req.body.email], (error, results) => {
